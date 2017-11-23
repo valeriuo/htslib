@@ -2,16 +2,17 @@
 
 language: c
 compiler:
-  - clang
   - gcc
 
 os:
   - linux
-  - osx
 
 env:
-  - USE_CONFIG=no
-  - USE_CONFIG=yes
+  global:
+    - CODECOV_TOKEN=5550daa1-ef0c-48a7-bc2b-b3107f09e481
+  matrix:
+    - USE_CONFIG=no
+    - USE_CONFIG=yes
 
 # For linux systems
 addons:
@@ -26,3 +27,6 @@ before_install:
 
 script:
   - if test "$USE_CONFIG" = "yes" ; then autoreconf && ./configure ; fi && make -e && make test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

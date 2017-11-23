@@ -57,7 +57,7 @@ m4_ifdef([PKG_PROG_PKG_CONFIG], [PKG_PROG_PKG_CONFIG], [PKG_CONFIG=""])
 need_crypto=no
 pc_requires=
 static_LDFLAGS=
-static_LIBS='-lz -lm'
+static_LIBS='-lz -lm -lgcov'
 private_LIBS=
 
 AC_ARG_ENABLE([bz2],
@@ -139,6 +139,7 @@ case $host_alias in
     host_result="plain .so"
     PLATFORM=default
     PLUGIN_EXT=.so
+    CPPFLAGS="$CPPCFLAGS"
     ;;
 esac
 AC_MSG_RESULT([$host_result])
@@ -174,6 +175,8 @@ AC_SEARCH_LIBS([log], [m], [],
 
 HTSLIB requires a working floating-point math library.
 FAILED.  This error must be resolved in order to build HTSlib successfully.])])
+
+AC_SEARCH_LIBS([__gcov_init], [gcov], [CPPFLAGS="$CPPCFLAGS -coverage"], [AC_MSG_ERROR(gcov not found)], [])
 
 zlib_devel=ok
 dnl Set a trivial non-empty INCLUDES to avoid excess default includes tests

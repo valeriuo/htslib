@@ -6,6 +6,7 @@
 *.dll
 *.pc.tmp
 *-uninstalled.pc
+*.gcno
 /version.h
 
 autom4te.cache
@@ -32,6 +33,7 @@ lib*.so
 lib*.so.*
 
 /bgzip
+/cram/*.gcno
 /htsfile
 /tabix
 /test/fieldarith
@@ -50,5 +52,6 @@ lib*.so.*
 /test/thrash_threads[1-6]
 /test/*.tmp
 /test/*.tmp.*
+/test/*.gcno
 
 /TAGS
