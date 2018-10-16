@@ -693,6 +693,8 @@ static int cram_pseek(void *fp, int64_t offset, int whence)
      && (0 != cram_seek(fd, offset - fd->first_container, SEEK_CUR)))
         return -1;
 
+    fd->curr_position = offset;
+
     if (fd->ctr) {
         cram_free_container(fd->ctr);
         if (fd->ctr_mt && fd->ctr_mt != fd->ctr)
@@ -717,13 +719,22 @@ static int64_t cram_ptell(void *fp)
 {
     cram_fd *fd = (cram_fd *)fp;
     cram_container *c;
-    int64_t ret = -1L;
+    cram_slice *s;
+    int64_t ret = -1L, prod = -1L, cons = -1L;
 
-    if (fd && fd->fp) {
-        ret = htell(fd->fp);
+    if (fd) {
+        if (fd->fp)
+            prod = htell(fd->fp);
+        cons = fd->curr_position;
         if ((c = fd->ctr) != NULL) {
-            ret -= ((c->curr_slice < c->max_slice || c->curr_rec < c->num_records) ? c->offset + 1 : 0);
+            cons += c->offset;
+            if ((s = c->slice) != NULL && s->max_rec)
+                cons += (c->curr_slice + s->curr_rec/s->max_rec)/(c->max_slice + 1)*c->length;
+            else if (c->max_c_rec)
+                cons += c->curr_c_rec/c->max_c_rec*c->length;
         }
+            //((c->curr_slice < c->max_slice || c->curr_rec < c->num_records) ? c->offset + 1 : 0);
+        ret = cons != -1 ? cons : prod;
     }
 
     return ret;
