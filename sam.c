@@ -2822,7 +2822,7 @@ static int overlap_push(bam_plp_t iter, lbnode_t *node)
     if ( !iter->overlaps ) return 0;
 
     // mapped mates and paired reads only
-    if ( node->b.core.flag&BAM_FMUNMAP || !(node->b.core.flag&BAM_FPROPER_PAIR) ) return 0;
+    if ( (node->b.core.flag&BAM_FMUNMAP) || !(node->b.core.flag&BAM_FPROPER_PAIR) || (node->b.core.flag&BAM_FSUPPLEMENTARY) ) return 0;
 
     // no overlap possible, unless some wild cigar
     if ( abs(node->b.core.isize) >= 2*node->b.core.l_qseq ) return 0;
@@ -2854,6 +2854,7 @@ static void overlap_remove(bam_plp_t iter, const bam1_t *b)
     khiter_t kitr;
     if ( b )
     {
+        if ( b->core.flag&BAM_FSUPPLEMENTARY ) return;
         kitr = kh_get(olap_hash, iter->overlaps, bam_get_qname(b));
         if ( kitr!=kh_end(iter->overlaps) )
             kh_del(olap_hash, iter->overlaps, kitr);
