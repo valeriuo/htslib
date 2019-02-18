@@ -172,7 +172,8 @@ LIBHTS_OBJS = \
 	cram/pooled_alloc.o \
 	cram/rANS_static.o \
 	cram/sam_header.o \
-	cram/string_alloc.o
+	cram/string_alloc.o \
+	dud.o
 
 PLUGIN_EXT  =
 PLUGIN_OBJS =
@@ -325,6 +326,7 @@ plugin.o plugin.pico: plugin.c config.h $(hts_internal_h) $(htslib_kstring_h)
 probaln.o probaln.pico: probaln.c config.h $(htslib_hts_h)
 realn.o realn.pico: realn.c config.h $(htslib_hts_h) $(htslib_sam_h)
 textutils.o textutils.pico: textutils.c config.h $(htslib_hfile_h) $(htslib_kstring_h) $(hts_internal_h)
+dud.o dud.pico: dud.c
 
 cram/cram_codecs.o cram/cram_codecs.pico: cram/cram_codecs.c config.h $(cram_h)
 cram/cram_decode.o cram/cram_decode.pico: cram/cram_decode.c config.h $(cram_h) $(cram_os_h) $(htslib_hts_h)
