@@ -41,7 +41,7 @@
 
         while ( regitr_overlap(itr) )
         {
-            printf("[%d,%d] overlaps with [%d,%d], payload=%s\n", beg,end, 
+            printf("[%d,%d] overlaps with [%d,%d], payload=%s\n", beg,end,
                 itr->beg+1, itr->end+1, regitr_payload(itr,char*));
         }
 
@@ -50,7 +50,7 @@
 
 
     Another example, loop over all regions:
-        
+
         regidx_t *idx = regidx_init(in_fname,NULL,NULL,0,NULL);
         regitr_t *itr = regitr_init(idx);
 
@@ -109,7 +109,7 @@ typedef int  (*regidx_parse_f)(const char *line, char **chr_beg, char **chr_end,
 typedef void (*regidx_free_f)(void *payload);
 
 /*
- *  A note about the parsers: 
+ *  A note about the parsers:
  *      - leading spaces are ignored
  *      - lines starting with "#" are ignored
  */
@@ -152,7 +152,7 @@ void regidx_destroy(regidx_t *idx);
 int regidx_overlap(regidx_t *idx, const char *chr, uint32_t beg, uint32_t end, regitr_t *itr);
 
 /*
- *  regidx_insert() - add a new region. 
+ *  regidx_insert() - add a new region.
  *  regidx_insert_list() - add new regions from a list
  *  regidx_push() - low level insertion of a new region
  *

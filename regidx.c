@@ -1,4 +1,4 @@
-/* 
+/*
     Copyright (C) 2014-2018 Genome Research Ltd.
 
     Author: Petr Danecek <pd3@sanger.ac.uk>
@@ -22,6 +22,7 @@
     THE SOFTWARE.
 */
 
+#include <config.h>
 #include <strings.h>
 #include <assert.h>
 #include "htslib/hts.h"
@@ -106,23 +107,22 @@ char **regidx_seq_names(regidx_t *idx, int *n)
 
 int regidx_insert_list(regidx_t *idx, char *line, char delim)
 {
-    kstring_t tmp = {0,0,0};
+    kstring_t tmp = KS_INITIALIZE;
     char *ss = line;
     while ( *ss )
     {
         char *se = ss;
         while ( *se && *se!=delim ) se++;
-        tmp.l = 0;
-        kputsn(ss, se-ss, &tmp);
+        kputsn(ss, se-ss, ks_clear(&tmp));
         if ( regidx_insert(idx,tmp.s) < 0 )
         {
-            free(tmp.s);
+            ks_free(&tmp);
             return -1;
         }
         if ( !*se ) break;
         ss = se+1;
     }
-    free(tmp.s);
+    ks_free(&tmp);
     return 0;
 }
 
@@ -149,8 +149,7 @@ int regidx_push(regidx_t *idx, char *chr_beg, char *chr_end, uint32_t beg, uint3
     if ( end > MAX_COOR_0 ) end = MAX_COOR_0;
 
     int rid;
-    idx->str.l = 0;
-    if (kputsn(chr_beg, chr_end-chr_beg+1, &idx->str) < 0) return -1;
+    if (kputsn(chr_beg, chr_end-chr_beg+1, ks_clear(&idx->str)) < 0) return -1;
     if ( khash_str2int_get(idx->seq2regs, idx->str.s, &rid)!=0 )
     {
         // new chromosome
@@ -202,7 +201,7 @@ int regidx_insert(regidx_t *idx, char *line)
 
 regidx_t *regidx_init_string(const char *str, regidx_parse_f parser, regidx_free_f free_f, size_t payload_size, void *usr_dat)
 {
-    kstring_t tmp = {0,0,0};
+    kstring_t tmp = KS_INITIALIZE;
     regidx_t *idx = (regidx_t*) calloc(1,sizeof(regidx_t));
     if ( !idx ) return NULL;
 
@@ -223,18 +222,17 @@ regidx_t *regidx_init_string(const char *str, regidx_parse_f parser, regidx_free
         while ( *ss && isspace_c(*ss) ) ss++;
         const char *se = ss;
         while ( *se && *se!='\r' && *se!='\n' ) se++;
-        tmp.l = 0;
-        if (kputsn(ss, se-ss, &tmp) < 0) goto fail;
+        if (kputsn(ss, se-ss, ks_clear(&tmp)) < 0) goto fail;
         if (regidx_insert(idx, tmp.s) < 0) goto fail;
         while ( *se && isspace_c(*se) ) se++;
         ss = se;
     }
-    free(tmp.s);
+    ks_free(&tmp);
     return idx;
 
  fail:
     regidx_destroy(idx);
-    free(tmp.s);
+    ks_free(&tmp);
     return NULL;
 }
 
@@ -261,7 +259,7 @@ regidx_t *regidx_init(const char *fname, regidx_parse_f parser, regidx_free_f fr
         }
     }
 
-    kstring_t str = {0,0,0};
+    kstring_t str = KS_INITIALIZE;
     htsFile *fp = NULL;
     int ret;
     regidx_t *idx = (regidx_t*) calloc(1,sizeof(regidx_t));
@@ -278,7 +276,7 @@ regidx_t *regidx_init(const char *fname, regidx_parse_f parser, regidx_free_f fr
     }
 
     if ( !fname ) return idx;
-    
+
 
     fp = hts_open(fname,"r");
     if ( !fp ) goto error;
@@ -294,11 +292,11 @@ regidx_t *regidx_init(const char *fname, regidx_parse_f parser, regidx_free_f fr
         hts_log_error("Close failed .. %s", fname);
         goto error;
     }
-    free(str.s);
+    ks_free(&str);
     return idx;
 
 error:
-    free(str.s);
+    ks_free(&str);
     if ( fp ) hts_close(fp);
     regidx_destroy(idx);
     return NULL;
@@ -462,7 +460,7 @@ int regidx_parse_bed(const char *line, char **chr_beg, char **chr_end, uint32_t 
     while ( *ss && isspace_c(*ss) ) ss++;
     if ( !*ss ) return -1;      // skip blank lines
     if ( *ss=='#' ) return -1;  // skip comments
-    
+
     char *se = ss;
     while ( *se && !isspace_c(*se) ) se++;
 
@@ -484,7 +482,7 @@ int regidx_parse_bed(const char *line, char **chr_beg, char **chr_end, uint32_t 
     ss = se+1;
     *end = hts_parse_decimal(ss, &se, 0) - 1;
     if ( ss==se ) { hts_log_error("Could not parse bed line: %s", line); return -2; }
-    
+
     return 0;
 }
 
@@ -494,7 +492,7 @@ int regidx_parse_tab(const char *line, char **chr_beg, char **chr_end, uint32_t 
     while ( *ss && isspace_c(*ss) ) ss++;
     if ( !*ss ) return -1;      // skip blank lines
     if ( *ss=='#' ) return -1;  // skip comments
-    
+
     char *se = ss;
     while ( *se && !isspace_c(*se) ) se++;
 
@@ -541,7 +539,7 @@ int regidx_parse_reg(const char *line, char **chr_beg, char **chr_end, uint32_t 
     while ( *ss && isspace_c(*ss) ) ss++;
     if ( !*ss ) return -1;      // skip blank lines
     if ( *ss=='#' ) return -1;  // skip comments
-    
+
     char *se = ss;
     while ( *se && *se!=':' ) se++;
 
@@ -604,7 +602,7 @@ void regitr_destroy(regitr_t *regitr)
 
 int regitr_overlap(regitr_t *regitr)
 {
-    if ( !regitr->seq ) return 0;
+    if ( !regitr || !regitr->seq || !regitr->itr ) return 0;
 
     itr_t_ *itr = (itr_t_*) regitr->itr;
     if ( !itr->active )
@@ -638,6 +636,8 @@ int regitr_overlap(regitr_t *regitr)
 
 int regitr_loop(regitr_t *regitr)
 {
+    if ( !regitr || !regitr->itr ) return 0;
+
     itr_t_ *itr = (itr_t_*) regitr->itr;
     regidx_t *regidx = itr->ridx;
 

@@ -12,10 +12,10 @@
     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
-    
+
     The above copyright notice and this permission notice shall be included in
     all copies or substantial portions of the Software.
-    
+
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -144,7 +144,7 @@ void test_custom_payload(void)
     line = "1 20000002 20000002 1:20000002-20000002"; if ( regidx_insert(idx,line)!=0 ) error("insert failed: %s\n", line);
     line = "1 30000000 30000000 1:30000000-30000000"; if ( regidx_insert(idx,line)!=0 ) error("insert failed: %s\n", line);
 
-    // Test 
+    // Test
     regitr_t *itr = regitr_init(idx);
     int from, to;
 
@@ -202,7 +202,7 @@ void test_random(int nregs, uint32_t min, uint32_t max)
         if ( e>=beg && b<=end ) nexp++;
     }
 
-    // Test 
+    // Test
     regitr_t *itr = regitr_init(idx);
     int nhit = 0, ret = regidx_overlap(idx,"1",beg,end,itr);
     if ( nexp && !ret ) error("query failed, expected %d overlap(s), found none: %d-%d\n", nexp,beg+1,end+1);
@@ -404,7 +404,7 @@ int main(int argc, char **argv)
     };
     int c;
     int seed = (int)time(NULL);
-    while ((c = getopt_long(argc, argv, "hvs:",loptions,NULL)) >= 0) 
+    while ((c = getopt_long(argc, argv, "hvs:",loptions,NULL)) >= 0)
     {
         switch (c)
         {
