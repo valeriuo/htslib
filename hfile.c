@@ -35,7 +35,10 @@ DEALINGS IN THE SOFTWARE.  */
 #include <pthread.h>
 
 #ifdef ENABLE_PLUGINS
+#if defined(_WIN32) || defined(__CYGWIN__) || defined(__MSYS__)
+#define USING_WINDOWS_PLUGIN_DLLS
 #include <dlfcn.h>
+#endif
 #endif
 
 #include "htslib/hfile.h"
@@ -910,7 +913,7 @@ static inline int priority(const struct hFILE_scheme_handler *handler)
     return handler->priority % 1000;
 }
 
-#ifdef ENABLE_PLUGINS
+#ifdef USING_WINDOWS_PLUGIN_DLLS
 /*
  * Work-around for Windows plug-in dlls where the plug-in could be
  * using a different HTSlib library to the executable (for example
