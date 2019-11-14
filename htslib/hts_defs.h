@@ -111,4 +111,12 @@ DEALINGS IN THE SOFTWARE.  */
 #define HTSLIB_EXPORT
 #endif
 
+#if defined(_WIN32) || defined(__MSYS__)
+#define HTS_PATH_SEPARATOR_CHAR ';'
+#define HTS_PATH_SEPARATOR_STR  ";"
+#else
+#define HTS_PATH_SEPARATOR_CHAR ':'
+#define HTS_PATH_SEPARATOR_STR  ":"
+#endif
+
 #endif

@@ -107,11 +107,7 @@ char *tokenise_search_path(const char *searchpath) {
     char *newsearch;
     unsigned int i, j;
     size_t len;
-#if defined(_WIN32) || defined(__MSYS__)
-    char path_sep = ';';
-#else
-    char path_sep = ':';
-#endif
+    char path_sep = HTS_PATH_SEPARATOR_CHAR;
 
     if (!searchpath)
         searchpath="";
