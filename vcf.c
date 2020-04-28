@@ -3291,8 +3291,6 @@ static int vcf_idx_init(htsFile *fp, bcf_hdr_t *h, int min_shift, const char *fn
     u32_to_le(0,       conf+20); // n.skip
     u32_to_le(0,       conf+24); // ref name len
     if (hts_idx_set_meta(fp->idx, sizeof(conf)*sizeof(*conf), (uint8_t *)conf, 1) < 0) {
-        hts_idx_destroy(fp->idx);
-        fp->idx = NULL;
         return -1;
     }
     fp->fnidx = strdup(fnidx);
