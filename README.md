@@ -1,6 +1,8 @@
 [![Build Status](https://travis-ci.org/samtools/htslib.svg?branch=develop)](https://travis-ci.org/samtools/htslib)
 [![Build status](https://ci.appveyor.com/api/projects/status/v46hkwyfjp3l8nd3/branch/develop?svg=true)](https://ci.appveyor.com/project/samtools/htslib/branch/develop)
 [![Github All Releases](https://img.shields.io/github/downloads/samtools/htslib/total.svg)](https://github.com/samtools/htslib)
+[![Code Quality](https://www.code-inspector.com/project/8649/score/svg)](https://frontend.code-inspector.com/public/project/8649/htslib/dashboard)
+[![Code Grade](https://www.code-inspector.com/project/8649/status/svg)](https://frontend.code-inspector.com/public/project/8649/htslib/dashboard)
 
 HTSlib is an implementation of a unified C library for accessing common file
 formats, such as [SAM, CRAM and VCF][1], used for high-throughput sequencing
