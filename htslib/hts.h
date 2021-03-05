@@ -575,6 +575,9 @@ htsFile *hts_hopen(struct hFILE *fp, const char *fn, const char *mode);
 HTSLIB_EXPORT
 int hts_close(htsFile *fp);
 
+HTSLIB_EXPORT
+int hts_useek(htsFile *fp, off_t uoffset, int where);
+
 /*!
   @abstract  Returns the file's format information
   @param fp  The file handle
@@ -1031,6 +1034,9 @@ int hts_idx_get_stat(const hts_idx_t* idx, int tid, uint64_t* mapped, uint64_t* 
 */
 HTSLIB_EXPORT
 uint64_t hts_idx_get_n_no_coor(const hts_idx_t* idx);
+
+HTSLIB_EXPORT
+int hts_idx_get_limit(hts_idx_t *idx, int tid, off_t *minoff, off_t *maxoff);
 
 ///////////////////////////////////////////////////////////
 // Region parsing

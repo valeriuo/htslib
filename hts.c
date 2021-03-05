@@ -2627,6 +2627,49 @@ uint64_t hts_idx_get_n_no_coor(const hts_idx_t* idx)
     return idx->n_no_coor;
 }
 
+int hts_idx_get_limit(hts_idx_t *idx, int tid, off_t *minoff, off_t *maxoff) {
+    if (!idx || !maxoff)
+        return 1;
+
+    *minoff = UINT64_MAX;
+    *maxoff = 0;
+    khint_t k;
+    if (tid >= 0) {
+        bidx_t *hp = idx->bidx[tid];
+        for (k = 0; k < hp->n_buckets; k++) {
+            if (kh_exist(hp, k)) {
+                bins_t *p = &kh_value(hp, k);
+                if (p) {
+                    int i;
+                    for (i=0; i<p->n; i++) {
+                        if (p->list[i].u < *minoff) *minoff = p->list[i].u;
+                        if (p->list[i].v > *maxoff) *maxoff = p->list[i].v;
+                    }
+                }
+            }
+        }
+        if (*minoff == UINT64_MAX) *minoff = 0;
+    } else {
+        *minoff = 0;
+        int t;
+        for (t = 0; t < idx->n; t++) {
+            bidx_t *hp = idx->bidx[t];
+            for (k = 0; k < hp->n_buckets; k++) {
+                if (kh_exist(hp, k)) {
+                    bins_t *p = &kh_value(hp, k);
+                    if (p) {
+                        int i;
+                        for (i=0; i<p->n; i++)
+                            if (p->list[i].v > *maxoff) *maxoff = p->list[i].v;
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 /****************
  *** Iterator ***
  ****************/

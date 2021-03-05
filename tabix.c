@@ -196,6 +196,78 @@ static char **parse_regions(char *regions_fname, char **argv, int argc, int *nre
     }
     return regs;
 }
+static int find_limits(args_t *args, const char *fname, const char *refname, hts_pos_t *maxpos) {
+    htsFile *fp = hts_open(fname,"r");
+    hts_idx_t *idx = NULL;
+    off_t minoff = 0;
+    off_t maxoff = 0;
+    int tid, rid;
+
+    if ( !fp ) error_errno("Could not open \"%s\"", fname);
+    bcf_hdr_t *hdr = bcf_hdr_read(fp);
+    if (!hdr) return 1;
+
+    enum htsExactFormat format = hts_get_format(fp)->format;
+    if ( format == bcf )
+    {
+        idx = bcf_index_load3(fname, NULL, args->download_index ? HTS_IDX_SAVE_REMOTE : 0);
+        if ( !idx ) error_errno("Could not load .csi index of \"%s\"", fname);
+        tid = refname ? bcf_hdr_name2id(hdr, refname) : -1;
+        rid = tid;
+    } else if ( format == vcf ) {
+        tbx_t *tbx = tbx_index_load3(fname, NULL, args->download_index ? HTS_IDX_SAVE_REMOTE : 0);
+        if ( !tbx ) error_errno("Could not load .tbi/.csi index of %s", fname);
+        idx = tbx->idx;
+        tid = refname ? tbx_name2id(tbx, refname) : -1;
+        rid = refname ? bcf_hdr_name2id(hdr, refname) : -1;
+    } else {
+        return 1;
+    }
+
+    if ( refname && tid < 0 ) {
+        fprintf(stderr, "Reference '%s' not found in the header\n", refname);
+        return 1;
+    }
+    //if ( refname ) fprintf(stderr, "refname='%s'\n", refname);
+    hts_idx_get_limit(idx, tid , &minoff, &maxoff);
+    bcf1_t *rec = bcf_init1();
+    if (!rec) return 1;
+
+    hts_pos_t prev_pos;
+    const char *prev_ref;
+
+    if ( minoff > 0 )
+        hts_useek(fp, minoff, SEEK_SET);
+    if ( bcf_read(fp, hdr, rec) < 0 ) return 1;
+    prev_pos = rec->pos;
+    prev_ref = bcf_seqname(hdr, rec);
+    if ( tid >= 0 ) {
+        int found = rec->rid == rid;
+        while ( !found && bcf_read(fp, hdr, rec) >= 0 ) {
+            prev_pos = rec->pos;
+	    prev_ref = bcf_seqname(hdr, rec);
+            found = rec->rid == rid;
+        }
+        if ( !found ) {
+            fprintf(stderr, "Reference '%s' not found in file '%s'\n", refname, fname);
+            return 1;
+        }
+    }
+    fprintf(stderr, "ref=%s, pos=%"PRIhts_pos"\n", prev_ref, prev_pos+1);
+
+    hts_useek(fp, maxoff, SEEK_SET);
+    if ( bcf_read(fp, hdr, rec) < 0 ) return 1;
+    prev_pos = rec->pos;
+    prev_ref = bcf_seqname(hdr, rec);
+    while ( bcf_read(fp, hdr, rec) >= 0 && (tid < 0 || rid == rec->rid) ) {
+        prev_pos = rec->pos;
+	prev_ref = bcf_seqname(hdr, rec);
+        //fprintf(stderr, "loop tid=%s, pos=%"PRIhts_pos"\n", prev_ref, prev_pos+1);
+    }
+    fprintf(stderr, "ref=%s, pos=%"PRIhts_pos"\n", prev_ref, prev_pos+1);
+
+    return 0;
+}
 static int query_regions(args_t *args, tbx_conf_t *conf, char *fname, char **regs, int nregs)
 {
     int i;
@@ -484,6 +556,7 @@ static int usage(FILE *fp, int status)
     fprintf(fp, "   -D                         do not download the index file\n");
     fprintf(fp, "       --cache INT            set cache size to INT megabytes (0 disables) [10]\n");
     fprintf(fp, "       --separate-regions     separate the output by corresponding regions\n");
+    fprintf(fp, "       --find-limits          show the minimum and maximum genomic coordinates\n");
     fprintf(fp, "       --verbosity INT        set verbosity [3]\n");
     fprintf(fp, "\n");
     return status;
@@ -493,12 +566,12 @@ int main(int argc, char *argv[])
 {
     int c, detect = 1, min_shift = 0, is_force = 0, list_chroms = 0, do_csi = 0;
     tbx_conf_t conf = tbx_conf_gff;
-    char *reheader = NULL;
+    char *reheader = NULL, *refname = NULL;
     args_t args;
     memset(&args,0,sizeof(args_t));
     args.cache_megs = 10;
     args.download_index = 1;
-    int32_t new_line_skip = -1;
+    int32_t new_line_skip = -1, find_max = 0;
 
     static const struct option loptions[] =
     {
@@ -523,6 +596,7 @@ int main(int argc, char *argv[])
         {"verbosity", required_argument, NULL, 3},
         {"cache", required_argument, NULL, 4},
         {"separate-regions", no_argument, NULL, 5},
+        {"file-limits", optional_argument, NULL, 6},
         {NULL, 0, NULL, 0}
     };
 
@@ -602,6 +676,12 @@ int main(int argc, char *argv[])
             case 5:
                 args.separate_regs = 1;
                 break;
+            case 6:
+                find_max = 1;
+                if (!optarg && argc-optind > 1) {
+                  refname = argv[optind++];
+                }
+                break;
             default: return usage(stderr, EXIT_FAILURE);
         }
     }
@@ -634,6 +714,15 @@ int main(int argc, char *argv[])
         {
             if ( !min_shift ) min_shift = 14;
         }
+    }
+    if ( find_max ) {
+        if ( ftype != IS_VCF && ftype != IS_BCF ) {
+            hts_log_error("This feature only works for variant files");
+            return usage(stderr, EXIT_FAILURE);
+        }
+        hts_pos_t maxpos;
+        find_limits(&args, fname, refname, &maxpos);
+        return 0;
     }
     if ( argc > optind+1 || args.header_only || args.regions_fname || args.targets_fname )
     {
